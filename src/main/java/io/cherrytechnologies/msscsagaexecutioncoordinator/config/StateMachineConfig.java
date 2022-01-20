@@ -67,12 +67,12 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .and().withExternal()
                 .source(BeerOrderState.PICKED_UP)
                 .target(BeerOrderState.DELIVERED)
-                .event(BeerOrderEvent.DELIVERED)
+                .event(BeerOrderEvent.DELIVERY_SUCCESS)
 
                 .and().withExternal()
                 .source(BeerOrderState.PICKED_UP)
                 .target(BeerOrderState.DELIVERY_EXCEPTION)
-                .event(BeerOrderEvent.DELIVERY_EXCEPTION);
+                .event(BeerOrderEvent.DELIVERY_FAILED);
     }
 
     @Override
