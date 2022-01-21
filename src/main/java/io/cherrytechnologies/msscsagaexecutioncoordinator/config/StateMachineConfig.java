@@ -1,7 +1,10 @@
 package io.cherrytechnologies.msscsagaexecutioncoordinator.config;
 
+import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidateOrderAction;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderEvent;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderState;
+import io.cherrytechnologies.msscsagaexecutioncoordinator.guards.ValidateOrderGuard;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.StateMachine;
@@ -20,7 +23,11 @@ import java.util.Optional;
 @Configuration
 @EnableStateMachineFactory
 @Slf4j
+@RequiredArgsConstructor
 public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderState, BeerOrderEvent> {
+
+    private final ValidateOrderAction validateOrderAction;
+
     @Override
     public void configure(StateMachineTransitionConfigurer<BeerOrderState, BeerOrderEvent> transitions) throws Exception {
         transitions
@@ -28,6 +35,8 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .source(BeerOrderState.NEW)
                 .target(BeerOrderState.NEW)
                 .event(BeerOrderEvent.VALIDATE_ORDER)
+                .action(validateOrderAction.action())
+                .guard(ValidateOrderGuard.beerOrderDtoGuard())
 
                 .and().withExternal()
                 .source(BeerOrderState.NEW)
@@ -38,6 +47,11 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .source(BeerOrderState.NEW)
                 .target(BeerOrderState.VALIDATION_EXCEPTION)
                 .event(BeerOrderEvent.VALIDATION_FAILED)
+
+                .and().withExternal()
+                .source(BeerOrderState.NEW)
+                .target(BeerOrderState.VALIDATE)
+                .event(BeerOrderEvent.VALIDATED_BUT_NO_INVENTORY)
 
                 .and().withExternal()
                 .source(BeerOrderState.VALIDATE)
