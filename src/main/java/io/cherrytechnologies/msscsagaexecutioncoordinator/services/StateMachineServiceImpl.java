@@ -1,5 +1,6 @@
 package io.cherrytechnologies.msscsagaexecutioncoordinator.services;
 
+import guru.sfg.common.events.NoInventoryEvent;
 import guru.sfg.common.models.BeerOrderDto;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderEvent;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderState;
@@ -17,6 +18,7 @@ import java.util.UUID;
 public class StateMachineServiceImpl implements StateMachineService {
     public static final String BEER_ORDER_ID = "beer_order_id_header";
     public static final String BEER_ORDER = "beer_order_header";
+    public static final String NO_INVENTORY_BEER_LIST = "no_inventory_beer_list";
 
     private final StateMachineFactory<BeerOrderState, BeerOrderEvent> factory;
 
@@ -47,6 +49,19 @@ public class StateMachineServiceImpl implements StateMachineService {
                 MessageBuilder.withPayload(BeerOrderEvent.VALIDATION_SUCCESS)
                 .setHeader(BEER_ORDER,beerOrderDto)
                 .build()
+        );
+        return stateMachine;
+    }
+
+    @Override
+    public StateMachine<BeerOrderState, BeerOrderEvent> validateButNoInventoryService(NoInventoryEvent event) {
+        BeerOrderDto beerOrderDto = event.getBeerOrderDto();
+        StateMachine<BeerOrderState, BeerOrderEvent> stateMachine = build(beerOrderDto.getId(), beerOrderDto.getStatus());
+        stateMachine.sendEvent(
+                MessageBuilder.withPayload(BeerOrderEvent.VALIDATED_BUT_NO_INVENTORY)
+                        .setHeader(BEER_ORDER,beerOrderDto)
+                        .setHeader(NO_INVENTORY_BEER_LIST,event.getBeersWithLessInventory())
+                        .build()
         );
         return stateMachine;
     }

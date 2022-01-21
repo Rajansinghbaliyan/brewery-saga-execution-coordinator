@@ -1,9 +1,11 @@
 package io.cherrytechnologies.msscsagaexecutioncoordinator.config;
 
+import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidButNoInventoryAction;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidateOrderAction;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidationSuccessfulAction;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderEvent;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderState;
+import io.cherrytechnologies.msscsagaexecutioncoordinator.guards.BeerInventoryListGuard;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.guards.BeerOrderGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
 
     private final ValidateOrderAction validateOrderAction;
     private final ValidationSuccessfulAction validationSuccessfulAction;
+    private final ValidButNoInventoryAction validButNoInventoryAction;
 
     @Override
     public void configure(StateMachineTransitionConfigurer<BeerOrderState, BeerOrderEvent> transitions) throws Exception {
@@ -54,13 +57,12 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
 
                 .and().withExternal()
                 .source(BeerOrderState.NEW)
-                .target(BeerOrderState.VALIDATE)
-                .event(BeerOrderEvent.VALIDATED_BUT_NO_INVENTORY)
-
-                .and().withExternal()
-                .source(BeerOrderState.VALIDATE)
                 .target(BeerOrderState.PENDING_INVENTORY)
-                .event(BeerOrderEvent.ALLOCATION_NO_INVENTORY)
+                .event(BeerOrderEvent.VALIDATED_BUT_NO_INVENTORY)
+                .action(validButNoInventoryAction.action())
+                .guard(BeerOrderGuard.guard())
+                .guard(BeerInventoryListGuard.guard())
+
 
                 .and().withExternal()
                 .source(BeerOrderState.VALIDATE)
@@ -70,7 +72,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .and().withExternal()
                 .source(BeerOrderState.PENDING_INVENTORY)
                 .target(BeerOrderState.ALLOCATED)
-                .event(BeerOrderEvent.ALLOCATION_SUCCESS)
+                .event(BeerOrderEvent.ALLOCATION_NO_INVENTORY)
 
                 .and().withExternal()
                 .source(BeerOrderState.VALIDATE)

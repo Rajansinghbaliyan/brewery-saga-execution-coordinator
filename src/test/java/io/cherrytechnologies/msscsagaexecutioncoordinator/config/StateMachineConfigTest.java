@@ -1,17 +1,22 @@
 package io.cherrytechnologies.msscsagaexecutioncoordinator.config;
 
+import guru.sfg.common.events.NoInventoryEvent;
+import guru.sfg.common.models.BeerOrderDto;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderEvent;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderState;
+import io.cherrytechnologies.msscsagaexecutioncoordinator.services.StateMachineServiceImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,7 +71,12 @@ class StateMachineConfigTest {
     @Test()
     @DisplayName("Test Validation Success Event")
     void testValidationPassed() {
-        stateMachine.sendEvent(BeerOrderEvent.VALIDATION_SUCCESS);
+        stateMachine.sendEvent(
+                MessageBuilder
+                        .withPayload(BeerOrderEvent.VALIDATION_SUCCESS)
+                        .setHeader(StateMachineServiceImpl.BEER_ORDER, BeerOrderDto.builder().build())
+                        .build()
+        );
 
         assertEquals(BeerOrderState.VALIDATE, stateMachine.getState().getId());
     }
@@ -83,8 +93,20 @@ class StateMachineConfigTest {
     @DisplayName("Test Allocation No Inventory Event")
     void testAllocationNoInventoryEvent() {
         //given
-        build(stateMachine, BeerOrderState.VALIDATE)
-                .sendEvent(BeerOrderEvent.ALLOCATION_NO_INVENTORY);
+        NoInventoryEvent event = NoInventoryEvent
+                .builder()
+                .beersWithLessInventory(new ArrayList<>())
+                .beerOrderDto(BeerOrderDto.builder().build())
+                .build();
+
+        build(stateMachine, BeerOrderState.NEW)
+                .sendEvent(
+                        MessageBuilder
+                                .withPayload(BeerOrderEvent.VALIDATED_BUT_NO_INVENTORY)
+                                .setHeader(StateMachineServiceImpl.BEER_ORDER, event.getBeerOrderDto())
+                                .setHeader(StateMachineServiceImpl.NO_INVENTORY_BEER_LIST, event.getBeersWithLessInventory())
+                                .build()
+                );
 
         assertEquals(BeerOrderState.PENDING_INVENTORY, stateMachine.getState().getId());
     }
@@ -104,7 +126,7 @@ class StateMachineConfigTest {
     void testAllocationSuccessEventFromPending() {
         // given
         build(stateMachine, BeerOrderState.PENDING_INVENTORY)
-                .sendEvent(BeerOrderEvent.ALLOCATION_SUCCESS);
+                .sendEvent(BeerOrderEvent.ALLOCATION_NO_INVENTORY);
 
         assertEquals(BeerOrderState.ALLOCATED, stateMachine.getState().getId());
     }
