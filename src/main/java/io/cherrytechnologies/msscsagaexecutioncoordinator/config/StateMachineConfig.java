@@ -1,5 +1,6 @@
 package io.cherrytechnologies.msscsagaexecutioncoordinator.config;
 
+import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.PendingToValidateAction;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidButNoInventoryAction;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidateOrderAction;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidationSuccessfulAction;
@@ -32,6 +33,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
     private final ValidateOrderAction validateOrderAction;
     private final ValidationSuccessfulAction validationSuccessfulAction;
     private final ValidButNoInventoryAction validButNoInventoryAction;
+    private final PendingToValidateAction pendingToValidateAction;
 
     @Override
     public void configure(StateMachineTransitionConfigurer<BeerOrderState, BeerOrderEvent> transitions) throws Exception {
@@ -42,6 +44,14 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .event(BeerOrderEvent.VALIDATE_ORDER)
                 .action(validateOrderAction.action())
                 .guard(BeerOrderGuard.guard())
+
+                .and().withExternal()
+                .source(BeerOrderState.NEW)
+                .target(BeerOrderState.PENDING_INVENTORY)
+                .event(BeerOrderEvent.VALIDATED_BUT_NO_INVENTORY)
+                .action(validButNoInventoryAction.action())
+                .guard(BeerOrderGuard.guard())
+                .guard(BeerInventoryListGuard.guard())
 
                 .and().withExternal()
                 .source(BeerOrderState.NEW)
@@ -56,23 +66,21 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .event(BeerOrderEvent.VALIDATION_FAILED)
 
                 .and().withExternal()
-                .source(BeerOrderState.NEW)
-                .target(BeerOrderState.PENDING_INVENTORY)
-                .event(BeerOrderEvent.VALIDATED_BUT_NO_INVENTORY)
-                .action(validButNoInventoryAction.action())
+                .source(BeerOrderState.PENDING_INVENTORY)
+                .target(BeerOrderState.VALIDATE)
+                .event(BeerOrderEvent.PENDING_TO_VALIDATED)
+                .action(pendingToValidateAction.action())
                 .guard(BeerOrderGuard.guard())
-                .guard(BeerInventoryListGuard.guard())
 
+                .and().withExternal()
+                .source(BeerOrderState.VALIDATE)
+                .target(BeerOrderState.VALIDATE)
+                .event(BeerOrderEvent.ALLOCATE_ORDER)
 
                 .and().withExternal()
                 .source(BeerOrderState.VALIDATE)
                 .target(BeerOrderState.ALLOCATED)
                 .event(BeerOrderEvent.ALLOCATION_SUCCESS)
-
-                .and().withExternal()
-                .source(BeerOrderState.PENDING_INVENTORY)
-                .target(BeerOrderState.ALLOCATED)
-                .event(BeerOrderEvent.ALLOCATION_NO_INVENTORY)
 
                 .and().withExternal()
                 .source(BeerOrderState.VALIDATE)

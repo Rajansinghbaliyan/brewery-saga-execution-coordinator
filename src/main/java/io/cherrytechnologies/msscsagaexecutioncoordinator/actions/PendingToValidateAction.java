@@ -12,18 +12,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-@Component
-@RequiredArgsConstructor
 @Slf4j
-public class ValidationSuccessfulAction {
-
+@RequiredArgsConstructor
+@Component
+public class PendingToValidateAction {
     private final JmsTemplate jmsTemplate;
 
     public Action<BeerOrderState, BeerOrderEvent> action() {
         return context -> Optional.ofNullable(context.getMessageHeaders())
                 .map(messages -> (BeerOrderDto) messages.get(StateMachineServiceImpl.BEER_ORDER))
                 .ifPresent(beerOrderDto -> {
-                    log.info("Running the validate successful action for beer order id: " + beerOrderDto.getId());
+                    log.info("Running the pending to validate order action for beer order id: " + beerOrderDto.getId());
                 });
     }
 }

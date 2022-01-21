@@ -1,6 +1,6 @@
 package io.cherrytechnologies.msscsagaexecutioncoordinator.listener;
 
-import guru.sfg.common.events.ValidationSuccessfulEvent;
+import guru.sfg.common.events.PendingToValidateEvent;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.config.JmsConfig;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.services.StateMachineService;
 import lombok.RequiredArgsConstructor;
@@ -11,11 +11,12 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class ValidationSuccessListener {
+public class PendingToValidateListener {
     private final StateMachineService stateMachineService;
-    @JmsListener(destination = JmsConfig.VALIDATION_SUCCESS_QUEUE)
-    public void listener(ValidationSuccessfulEvent event){
-        log.info("Validation successful for beer order id: "+ event.getBeerOrderDto().getId());
-        stateMachineService.validateSuccessService(event.getBeerOrderDto());
+
+    @JmsListener(destination = JmsConfig.PENDING_TO_VALIDATE_QUEUE)
+    public void listener(PendingToValidateEvent event){
+        log.info("Pending to validate listener for order id: "+ event.getBeerOrderDto().getId());
+        stateMachineService.pendingToValidateService(event);
     }
 }

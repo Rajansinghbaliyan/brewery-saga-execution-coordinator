@@ -1,6 +1,7 @@
 package io.cherrytechnologies.msscsagaexecutioncoordinator.services;
 
 import guru.sfg.common.events.NoInventoryEvent;
+import guru.sfg.common.events.PendingToValidateEvent;
 import guru.sfg.common.models.BeerOrderDto;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderEvent;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderState;
@@ -21,9 +22,11 @@ public class StateMachineServiceImpl implements StateMachineService {
     public static final String NO_INVENTORY_BEER_LIST = "no_inventory_beer_list";
 
     private final StateMachineFactory<BeerOrderState, BeerOrderEvent> factory;
+    private final StateChangeInterceptor interceptor;
 
     @Override
     public StateMachine<BeerOrderState, BeerOrderEvent> newOrderService(BeerOrderDto beerOrderDto) {
+        beerOrderDto.setStatus(BeerOrderState.NEW);
         StateMachine<BeerOrderState, BeerOrderEvent> stateMachine = build(beerOrderDto.getId(), beerOrderDto.getStatus());
 
         stateMachine.sendEvent(MessageBuilder
@@ -36,7 +39,9 @@ public class StateMachineServiceImpl implements StateMachineService {
     }
 
     @Override
-    public StateMachine<BeerOrderState, BeerOrderEvent> validateOrderService(UUID beerOrderId, BeerOrderState state) {
+    public StateMachine<BeerOrderState, BeerOrderEvent> validateOrderService(BeerOrderDto beerOrderDto) {
+        UUID beerOrderId = beerOrderDto.getId();
+        BeerOrderState state = beerOrderDto.getStatus();
         StateMachine<BeerOrderState, BeerOrderEvent> stateMachine = build(beerOrderId, state);
         sendEvent(stateMachine, beerOrderId, BeerOrderEvent.VALIDATE_ORDER);
         return stateMachine;
@@ -66,6 +71,18 @@ public class StateMachineServiceImpl implements StateMachineService {
         return stateMachine;
     }
 
+    @Override
+    public StateMachine<BeerOrderState, BeerOrderEvent> pendingToValidateService(PendingToValidateEvent event) {
+        BeerOrderDto beerOrderDto = event.getBeerOrderDto();
+        StateMachine<BeerOrderState, BeerOrderEvent> stateMachine = build(beerOrderDto.getId(), beerOrderDto.getStatus());
+        stateMachine.sendEvent(
+                MessageBuilder.withPayload(BeerOrderEvent.PENDING_TO_VALIDATED)
+                        .setHeader(BEER_ORDER,beerOrderDto)
+                        .build()
+        );
+        return stateMachine;
+    }
+
     private StateMachine<BeerOrderState, BeerOrderEvent> build(UUID beerOrderId, BeerOrderState state) {
         StateMachine<BeerOrderState, BeerOrderEvent> stateMachine = factory.getStateMachine(beerOrderId);
         stateMachine.start();
@@ -73,6 +90,7 @@ public class StateMachineServiceImpl implements StateMachineService {
         stateMachine.start();
 
         stateMachine.getStateMachineAccessor().doWithAllRegions(sma -> {
+            sma.addStateMachineInterceptor(interceptor);
             sma.resetStateMachine(
                     new DefaultStateMachineContext<>(
                             state,

@@ -7,6 +7,8 @@ import org.springframework.jms.support.converter.MappingJackson2MessageConverter
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
 
+import java.net.PortUnreachableException;
+
 @Configuration
 public class JmsConfig {
 
@@ -22,6 +24,9 @@ public class JmsConfig {
     public static final String DELIVERY_SUCCESS_QUEUE = "delivery_success_queue";
     public static final String DELIVERY_FAILED_QUEUE = "delivery_failed_queue";
     public static final String CHANGE_STATE_QUEUE = "change_state_queue";
+    public static final String BREW_MORE_BEER_QUEUE = "brew_more_beer_queue";
+    public static final String PENDING_TO_VALIDATE_QUEUE = "pending_to_validate_queue";
+    public static final String ALLOCATE_ORDER_QUEUE = "allocate_order_queue";
 
     @Bean
     public MessageConverter converter(ObjectMapper objectMapper) {
