@@ -1,9 +1,10 @@
 package io.cherrytechnologies.msscsagaexecutioncoordinator.config;
 
 import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidateOrderAction;
+import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidationSuccessfulAction;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderEvent;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderState;
-import io.cherrytechnologies.msscsagaexecutioncoordinator.guards.ValidateOrderGuard;
+import io.cherrytechnologies.msscsagaexecutioncoordinator.guards.BeerOrderGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -27,6 +28,7 @@ import java.util.Optional;
 public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderState, BeerOrderEvent> {
 
     private final ValidateOrderAction validateOrderAction;
+    private final ValidationSuccessfulAction validationSuccessfulAction;
 
     @Override
     public void configure(StateMachineTransitionConfigurer<BeerOrderState, BeerOrderEvent> transitions) throws Exception {
@@ -36,12 +38,14 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .target(BeerOrderState.NEW)
                 .event(BeerOrderEvent.VALIDATE_ORDER)
                 .action(validateOrderAction.action())
-                .guard(ValidateOrderGuard.beerOrderDtoGuard())
+                .guard(BeerOrderGuard.guard())
 
                 .and().withExternal()
                 .source(BeerOrderState.NEW)
                 .target(BeerOrderState.VALIDATE)
                 .event(BeerOrderEvent.VALIDATION_SUCCESS)
+                .action(validationSuccessfulAction.action())
+                .guard(BeerOrderGuard.guard())
 
                 .and().withExternal()
                 .source(BeerOrderState.NEW)

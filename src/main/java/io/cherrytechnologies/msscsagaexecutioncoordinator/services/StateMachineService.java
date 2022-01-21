@@ -11,5 +11,5 @@ public interface StateMachineService {
 
     StateMachine<BeerOrderState, BeerOrderEvent> newOrderService(BeerOrderDto beerOrderDto);
     StateMachine<BeerOrderState, BeerOrderEvent> validateOrderService(UUID beerOrderId, BeerOrderState state);
-    StateMachine<BeerOrderState, BeerOrderEvent> validateSuccessService(UUID beerOrderId, BeerOrderState state);
+    StateMachine<BeerOrderState, BeerOrderEvent> validateSuccessService(BeerOrderDto beerOrderDto);
 }

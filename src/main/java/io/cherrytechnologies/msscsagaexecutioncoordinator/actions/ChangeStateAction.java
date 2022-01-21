@@ -10,7 +10,6 @@ import org.springframework.jms.core.JmsTemplate;
 import java.util.UUID;
 
 @Slf4j
-@RequiredArgsConstructor
 public class ChangeStateAction {
     public static void changeState(BeerOrderState state, UUID beerOrderId, JmsTemplate jmsTemplate) {
         jmsTemplate.convertAndSend(

@@ -14,27 +14,19 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-@Slf4j
-@RequiredArgsConstructor
 @Component
-public class ValidateOrderAction {
+@RequiredArgsConstructor
+@Slf4j
+public class ValidationSuccessfulAction {
 
     private final JmsTemplate jmsTemplate;
 
     public Action<BeerOrderState, BeerOrderEvent> action() {
-        return context -> {
-            Optional.ofNullable(context.getMessageHeaders())
-                    .map(messages -> (BeerOrderDto) messages.get(StateMachineServiceImpl.BEER_ORDER))
-                    .ifPresent(beerOrderDto -> {
-                        log.info("Running the validate order action for beer order id: " + beerOrderDto.getId());
-                        jmsTemplate.convertAndSend(
-                                JmsConfig.VALIDATE_QUEUE,
-                                ValidateOrderEvent
-                                        .builder()
-                                        .beerOrderDto(beerOrderDto)
-                                        .build()
-                        );
-                    });
-        };
+        return context -> Optional.ofNullable(context.getMessageHeaders())
+                .map(messages -> (BeerOrderDto) messages.get(StateMachineServiceImpl.BEER_ORDER))
+                .ifPresent(beerOrderDto -> {
+                    log.info("Running the validate successful action for beer order id: " + beerOrderDto.getId());
+                    ChangeStateAction.changeState(BeerOrderState.VALIDATE,beerOrderDto.getId(),jmsTemplate);
+                });
     }
 }

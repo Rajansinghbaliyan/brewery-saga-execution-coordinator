@@ -7,8 +7,8 @@ import org.springframework.statemachine.guard.Guard;
 
 import java.util.Optional;
 
-public class ValidateOrderGuard {
-    public static Guard<BeerOrderState, BeerOrderEvent> beerOrderDtoGuard() {
+public class BeerOrderGuard {
+    public static Guard<BeerOrderState, BeerOrderEvent> guard() {
         return context -> {
             return Optional.ofNullable(context.getMessageHeaders())
                     .map(messages -> messages.get(StateMachineServiceImpl.BEER_ORDER))

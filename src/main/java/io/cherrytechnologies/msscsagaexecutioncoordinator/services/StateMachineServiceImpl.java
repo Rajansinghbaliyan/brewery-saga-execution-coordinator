@@ -41,10 +41,14 @@ public class StateMachineServiceImpl implements StateMachineService {
     }
 
     @Override
-    public StateMachine<BeerOrderState, BeerOrderEvent> validateSuccessService(UUID beerOrderId, BeerOrderState state) {
-        StateMachine<BeerOrderState, BeerOrderEvent> stateMachine = build(beerOrderId, state);
-        sendEvent(stateMachine, beerOrderId, BeerOrderEvent.VALIDATION_SUCCESS);
-        return null;
+    public StateMachine<BeerOrderState, BeerOrderEvent> validateSuccessService(BeerOrderDto beerOrderDto) {
+        StateMachine<BeerOrderState, BeerOrderEvent> stateMachine = build(beerOrderDto.getId(), beerOrderDto.getStatus());
+        stateMachine.sendEvent(
+                MessageBuilder.withPayload(BeerOrderEvent.VALIDATION_SUCCESS)
+                .setHeader(BEER_ORDER,beerOrderDto)
+                .build()
+        );
+        return stateMachine;
     }
 
     private StateMachine<BeerOrderState, BeerOrderEvent> build(UUID beerOrderId, BeerOrderState state) {
