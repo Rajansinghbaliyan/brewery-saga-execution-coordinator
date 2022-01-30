@@ -7,23 +7,27 @@ import io.cherrytechnologies.msscsagaexecutioncoordinator.services.StateMachineS
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.action.Action;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class ValidationSuccessfulAction {
-
-    private final JmsTemplate jmsTemplate;
-
     public Action<BeerOrderState, BeerOrderEvent> action() {
         return context -> Optional.ofNullable(context.getMessageHeaders())
                 .map(messages -> (BeerOrderDto) messages.get(StateMachineServiceImpl.BEER_ORDER))
                 .ifPresent(beerOrderDto -> {
                     log.info("Running the validate successful action for beer order id: " + beerOrderDto.getId());
+                    context.getStateMachine()
+                            .sendEvent(
+                                    MessageBuilder
+                                            .withPayload(BeerOrderEvent.ALLOCATE_ORDER)
+                                            .setHeader(StateMachineServiceImpl.BEER_ORDER, beerOrderDto)
+                                            .build()
+                            );
                 });
     }
 }

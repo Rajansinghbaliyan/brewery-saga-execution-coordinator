@@ -3,7 +3,6 @@ package io.cherrytechnologies.msscsagaexecutioncoordinator.actions;
 import guru.sfg.common.events.ChangeStateEvent;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.config.JmsConfig;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderState;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jms.core.JmsTemplate;
 

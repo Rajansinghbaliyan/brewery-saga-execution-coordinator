@@ -18,6 +18,4 @@ public interface StateMachineService {
     StateMachine<BeerOrderState, BeerOrderEvent> validateButNoInventoryService(NoInventoryEvent event);
 
     StateMachine<BeerOrderState, BeerOrderEvent> pendingToValidateService(PendingToValidateEvent event);
-
-    StateMachine<BeerOrderState, BeerOrderEvent> Service(PendingToValidateEvent event);
 }

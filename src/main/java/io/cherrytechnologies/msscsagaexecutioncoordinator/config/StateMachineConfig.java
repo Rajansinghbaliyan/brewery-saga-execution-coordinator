@@ -1,9 +1,6 @@
 package io.cherrytechnologies.msscsagaexecutioncoordinator.config;
 
-import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.PendingToValidateAction;
-import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidButNoInventoryAction;
-import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidateOrderAction;
-import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.ValidationSuccessfulAction;
+import io.cherrytechnologies.msscsagaexecutioncoordinator.actions.*;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderEvent;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.domain.BeerOrderState;
 import io.cherrytechnologies.msscsagaexecutioncoordinator.guards.BeerInventoryListGuard;
@@ -34,6 +31,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
     private final ValidationSuccessfulAction validationSuccessfulAction;
     private final ValidButNoInventoryAction validButNoInventoryAction;
     private final PendingToValidateAction pendingToValidateAction;
+    private final AllocateOrderAction allocateOrderAction;
 
     @Override
     public void configure(StateMachineTransitionConfigurer<BeerOrderState, BeerOrderEvent> transitions) throws Exception {
@@ -76,6 +74,8 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .source(BeerOrderState.VALIDATE)
                 .target(BeerOrderState.VALIDATE)
                 .event(BeerOrderEvent.ALLOCATE_ORDER)
+                .action(allocateOrderAction.action())
+                .guard(BeerOrderGuard.guard())
 
                 .and().withExternal()
                 .source(BeerOrderState.VALIDATE)
